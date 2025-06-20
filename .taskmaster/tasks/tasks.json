@@ -1,0 +1,123 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Setup Project Repository and Environment",
+        "description": "Initialize the project repository with the required structure, dependencies, and environment configuration for API keys management.",
+        "details": "1. Create a new repository for the project\n2. Set up the basic project structure:\n   - `/src` - Source code\n   - `/tests` - Test files\n   - `/config` - Configuration files\n   - `/docs` - Documentation\n3. Initialize package management (package.json for Node.js or requirements.txt for Python)\n4. Set up environment variables management for API keys:\n   - Create .env.example file\n   - Add .env to .gitignore\n   - Install dotenv or similar package\n5. Configure linting and code formatting\n6. Create README.md with project overview and setup instructions\n7. Set up basic error logging infrastructure\n\nPseudo-code for environment setup:\n```\n// Load environment variables\nrequire('dotenv').config();\n\n// Validate required environment variables\nfunction validateEnv() {\n  const required = ['OPENAI_API_KEY', 'NOTION_API_KEY'];\n  for (const key of required) {\n    if (!process.env[key]) {\n      throw new Error(`Missing required environment variable: ${key}`);\n    }\n  }\n}\n```",
+        "testStrategy": "1. Verify all project directories are created correctly\n2. Ensure environment variables are loaded properly\n3. Test environment validation function with missing variables\n4. Verify package dependencies install correctly\n5. Run linting to ensure code style compliance",
+        "priority": "high",
+        "dependencies": [],
+        "status": "in-progress",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Implement Conversation Analysis Engine",
+        "description": "Build the core analysis engine that processes raw conversation text to extract key topics, structure, planning elements, and user preferences.",
+        "details": "1. Integrate with OpenAI API or similar LLM\n2. Create conversation parser module with the following functions:\n   - `extractTopics(conversation)`: Identify main topics and categories\n   - `identifyPlanningElements(conversation)`: Extract schedules, checklists, trackers\n   - `detectUserPreferences(conversation)`: Parse style preferences (aesthetic, colors, etc.)\n   - `extractActionItems(conversation)`: Identify tasks and action items\n\n3. Implement conversation preprocessing:\n   - Clean and normalize text\n   - Split into meaningful segments\n   - Handle special characters and formatting\n\n4. Create a structured output format for the analysis results\n\nPseudo-code:\n```\nasync function analyzeConversation(conversationText) {\n  // Preprocess the conversation\n  const cleanedText = preprocessText(conversationText);\n  \n  // Prepare prompt for LLM\n  const prompt = buildAnalysisPrompt(cleanedText);\n  \n  // Call OpenAI API\n  const response = await openai.createCompletion({\n    model: \"gpt-4\",\n    prompt: prompt,\n    max_tokens: 1000,\n    temperature: 0.3\n  });\n  \n  // Parse the response\n  const analysisResult = parseAnalysisResponse(response.choices[0].text);\n  \n  return {\n    topics: analysisResult.topics,\n    planningElements: analysisResult.planningElements,\n    userPreferences: analysisResult.userPreferences,\n    actionItems: analysisResult.actionItems,\n    structure: analysisResult.structure\n  };\n}\n```",
+        "testStrategy": "1. Unit tests for each extraction function with sample conversations\n2. Integration test with the OpenAI API using mock responses\n3. Test with the seed conversation from the PRD to verify extraction accuracy\n4. Validate output structure against expected schema\n5. Performance testing to ensure processing completes within acceptable time (<30 seconds)\n6. Error handling tests for malformed inputs and API failures",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Develop Template Structure Mapper",
+        "description": "Create a module that maps conversation analysis results to Notion template components and structures.",
+        "details": "1. Define mapping rules between conversation elements and Notion components:\n   - Map planning elements to appropriate Notion databases/views\n   - Match user preferences to styling options\n   - Convert action items to tasks or checklist items\n\n2. Create template blueprints for common components:\n   - Content Board (Kanban-style)\n   - Calendar View\n   - Database structures\n   - Page layouts\n\n3. Implement the mapper functions:\n   - `mapToContentManagement(analysisResult)`: Generate content board, calendar, ideas database\n   - `mapToWorkflowComponents(analysisResult)`: Create routine trackers, checklists\n   - `mapToCreativeComponents(analysisResult)`: Build moodboard, galleries, journals\n   - `mapToAnalyticsComponents(analysisResult)`: Design performance trackers, milestone logs\n\n4. Generate a complete template specification as JSON\n\nPseudo-code:\n```\nfunction generateTemplateSpec(analysisResult) {\n  const templateSpec = {\n    pages: [],\n    databases: [],\n    styles: {}\n  };\n  \n  // Map content management components\n  const contentComponents = mapToContentManagement(analysisResult);\n  templateSpec.databases.push(...contentComponents.databases);\n  templateSpec.pages.push(...contentComponents.pages);\n  \n  // Map workflow components\n  const workflowComponents = mapToWorkflowComponents(analysisResult);\n  templateSpec.databases.push(...workflowComponents.databases);\n  templateSpec.pages.push(...workflowComponents.pages);\n  \n  // Map creative components\n  const creativeComponents = mapToCreativeComponents(analysisResult);\n  templateSpec.databases.push(...creativeComponents.databases);\n  templateSpec.pages.push(...creativeComponents.pages);\n  \n  // Map analytics components\n  const analyticsComponents = mapToAnalyticsComponents(analysisResult);\n  templateSpec.databases.push(...analyticsComponents.databases);\n  templateSpec.pages.push(...analyticsComponents.pages);\n  \n  // Apply styling based on preferences\n  templateSpec.styles = generateStyles(analysisResult.userPreferences);\n  \n  return templateSpec;\n}\n```",
+        "testStrategy": "1. Unit tests for each mapping function\n2. Test with various analysis results to ensure correct mapping\n3. Validate generated template specifications against expected structures\n4. Test edge cases (missing preferences, minimal conversation data)\n5. Verify that all required components from the PRD are included in the output\n6. Test with the seed conversation to ensure it generates the expected template structure",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Implement Notion API Integration",
+        "description": "Build the integration with the Notion API to create pages, databases, and views based on the template specification.",
+        "details": "1. Set up Notion API client with authentication\n2. Implement core Notion API operations:\n   - `createPage(pageSpec)`: Create a new page\n   - `createDatabase(dbSpec)`: Create a new database\n   - `createBlock(blockSpec)`: Add blocks to pages\n   - `updatePageProperties(pageId, properties)`: Update page properties\n   - `configureView(databaseId, viewSpec)`: Configure database views\n\n3. Implement relationship handling:\n   - Create relations between databases\n   - Set up linked properties\n   - Configure formulas\n\n4. Add template sharing functionality:\n   - Generate shareable link\n   - Set appropriate permissions\n\nPseudo-code:\n```\nconst { Client } = require('@notionhq/client');\n\nclass NotionTemplateCreator {\n  constructor(apiKey) {\n    this.notion = new Client({ auth: apiKey });\n  }\n  \n  async createTemplate(templateSpec) {\n    // Create parent page for the template\n    const parentPage = await this.createPage(templateSpec.parentPage);\n    \n    // Create all databases\n    const databaseIds = {};\n    for (const dbSpec of templateSpec.databases) {\n      const database = await this.createDatabase({\n        ...dbSpec,\n        parent: { page_id: parentPage.id }\n      });\n      databaseIds[dbSpec.key] = database.id;\n    }\n    \n    // Create all child pages\n    for (const pageSpec of templateSpec.pages) {\n      await this.createPage({\n        ...pageSpec,\n        parent: { page_id: parentPage.id }\n      });\n    }\n    \n    // Set up relationships between databases\n    await this.setupRelationships(templateSpec.relationships, databaseIds);\n    \n    // Configure views for each database\n    for (const dbSpec of templateSpec.databases) {\n      if (dbSpec.views) {\n        for (const viewSpec of dbSpec.views) {\n          await this.configureView(databaseIds[dbSpec.key], viewSpec);\n        }\n      }\n    }\n    \n    // Generate shareable link\n    const shareLink = await this.generateShareableLink(parentPage.id);\n    \n    return {\n      templateId: parentPage.id,\n      shareLink,\n      databaseIds\n    };\n  }\n  \n  // Other methods...\n}\n```",
+        "testStrategy": "1. Unit tests for each Notion API operation\n2. Mock Notion API responses for testing\n3. Integration tests with a test Notion workspace\n4. Verify database creation with correct properties\n5. Test relationship setup between databases\n6. Validate view configurations (Kanban, Calendar, etc.)\n7. Test error handling for API rate limits and failures\n8. Verify shareable link generation and permissions",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Develop Aesthetic Customization Module",
+        "description": "Create a module that detects and applies aesthetic preferences from the conversation to the Notion template.",
+        "details": "1. Implement style preference detection:\n   - Parse aesthetic keywords (dreamy, colorful, kawaii, etc.)\n   - Map keywords to color schemes\n   - Identify icon and emoji preferences\n   - Detect typography preferences\n\n2. Create style application functions:\n   - `applyColorScheme(templateSpec, colorScheme)`: Apply colors to pages and databases\n   - `applyIcons(templateSpec, iconPreferences)`: Add icons to pages and databases\n   - `applyTypography(templateSpec, fontPreferences)`: Set typography where possible\n\n3. Build a style library with predefined themes:\n   - Pastel/kawaii theme (soft pinks, lavenders, peaches)\n   - Minimalist theme\n   - Bold/vibrant theme\n   - Professional/corporate theme\n\n4. Implement style override functionality for user-specified preferences\n\nPseudo-code:\n```\nconst styleLibrary = {\n  kawaii: {\n    colors: ['#FFD1DC', '#E0BBE4', '#957DAD', '#D291BC'],\n    icons: ['✨', '🌸', '🎀', '💖', '🌈'],\n    typography: 'handwriting'\n  },\n  minimalist: {\n    colors: ['#FFFFFF', '#F5F5F5', '#EEEEEE', '#E0E0E0'],\n    icons: ['◯', '◻', '△', '⬡'],\n    typography: 'sans-serif'\n  },\n  // Other themes...\n};\n\nfunction detectStylePreferences(analysisResult) {\n  const keywords = analysisResult.userPreferences.aestheticKeywords || [];\n  let styleTheme = 'default';\n  \n  // Map keywords to themes\n  if (keywords.some(k => ['dreamy', 'kawaii', 'cute', 'pastel'].includes(k.toLowerCase()))) {\n    styleTheme = 'kawaii';\n  } else if (keywords.some(k => ['minimal', 'clean', 'simple'].includes(k.toLowerCase()))) {\n    styleTheme = 'minimalist';\n  }\n  // Other theme mappings...\n  \n  return {\n    theme: styleTheme,\n    colors: styleLibrary[styleTheme].colors,\n    icons: styleLibrary[styleTheme].icons,\n    typography: styleLibrary[styleTheme].typography,\n    customOverrides: analysisResult.userPreferences.explicitStyleRequests || {}\n  };\n}\n\nfunction applyStylesToTemplate(templateSpec, stylePreferences) {\n  // Apply colors to pages and databases\n  templateSpec = applyColorScheme(templateSpec, stylePreferences.colors);\n  \n  // Apply icons\n  templateSpec = applyIcons(templateSpec, stylePreferences.icons);\n  \n  // Apply typography where possible\n  templateSpec = applyTypography(templateSpec, stylePreferences.typography);\n  \n  // Apply any custom overrides\n  templateSpec = applyCustomOverrides(templateSpec, stylePreferences.customOverrides);\n  \n  return templateSpec;\n}\n```",
+        "testStrategy": "1. Unit tests for style detection with various keyword inputs\n2. Test mapping of keywords to themes\n3. Verify color scheme application to template elements\n4. Test icon and emoji assignment\n5. Validate custom override functionality\n6. Integration test with Notion API to ensure styles are applied correctly\n7. Visual inspection of generated templates for aesthetic consistency",
+        "priority": "medium",
+        "dependencies": [
+          2,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Build Template Generation Orchestrator",
+        "description": "Create the main orchestration module that coordinates the conversation analysis, template mapping, and Notion API integration.",
+        "details": "1. Implement the main orchestration flow:\n   - Receive conversation input\n   - Process through analysis engine\n   - Map to template structure\n   - Apply aesthetic customization\n   - Create template via Notion API\n   - Return results\n\n2. Add validation and error handling:\n   - Validate input conversation format\n   - Handle API failures gracefully\n   - Provide meaningful error messages\n\n3. Implement progress tracking and logging\n\n4. Add configuration options for template generation\n\nPseudo-code:\n```\nasync function generateNotionTemplate(conversationText, notionApiKey, options = {}) {\n  try {\n    // Step 1: Analyze conversation\n    const analysisResult = await analyzeConversation(conversationText);\n    logger.info('Conversation analysis complete');\n    \n    // Step 2: Map to template structure\n    const templateSpec = generateTemplateSpec(analysisResult);\n    logger.info('Template specification generated');\n    \n    // Step 3: Apply aesthetic customization\n    const stylePreferences = detectStylePreferences(analysisResult);\n    const styledTemplateSpec = applyStylesToTemplate(templateSpec, stylePreferences);\n    logger.info('Aesthetic customization applied');\n    \n    // Step 4: Create template in Notion\n    const notionClient = new NotionTemplateCreator(notionApiKey);\n    const templateResult = await notionClient.createTemplate(styledTemplateSpec);\n    logger.info('Notion template created successfully');\n    \n    // Step 5: Return results\n    return {\n      success: true,\n      templateUrl: templateResult.shareLink,\n      templateId: templateResult.templateId,\n      templateStructure: styledTemplateSpec\n    };\n  } catch (error) {\n    logger.error('Template generation failed', error);\n    return {\n      success: false,\n      error: error.message,\n      details: error.stack\n    };\n  }\n}\n```",
+        "testStrategy": "1. Integration tests for the full orchestration flow\n2. Test with various conversation inputs\n3. Verify error handling with simulated failures\n4. Test performance with timing measurements\n5. Validate output structure and correctness\n6. End-to-end test with the seed conversation from the PRD\n7. Test with edge cases (very short conversations, very long conversations)\n8. Verify logging and progress tracking",
+        "priority": "high",
+        "dependencies": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Create API Interface",
+        "description": "Develop the API interface that allows users to submit conversations and receive generated Notion templates.",
+        "details": "1. Set up API server (Express.js for Node.js or Flask/FastAPI for Python)\n2. Implement API endpoints:\n   - POST `/api/generate-template`: Submit conversation and generate template\n   - GET `/api/template/:id`: Get template generation status and results\n\n3. Add request validation and sanitization\n4. Implement rate limiting and API key authentication\n5. Set up CORS and security headers\n6. Add request logging and monitoring\n\nPseudo-code:\n```\nconst express = require('express');\nconst app = express();\n\n// Middleware\napp.use(express.json());\napp.use(rateLimit({\n  windowMs: 15 * 60 * 1000, // 15 minutes\n  max: 100 // limit each IP to 100 requests per windowMs\n}));\napp.use(helmet()); // Security headers\n\n// API endpoints\napp.post('/api/generate-template', async (req, res) => {\n  try {\n    // Validate request\n    const { conversation, notionApiKey, options } = req.body;\n    if (!conversation || !notionApiKey) {\n      return res.status(400).json({ error: 'Missing required parameters' });\n    }\n    \n    // Generate template\n    const result = await generateNotionTemplate(conversation, notionApiKey, options);\n    \n    if (result.success) {\n      return res.status(200).json(result);\n    } else {\n      return res.status(500).json(result);\n    }\n  } catch (error) {\n    return res.status(500).json({ error: error.message });\n  }\n});\n\napp.get('/api/template/:id', async (req, res) => {\n  try {\n    const templateId = req.params.id;\n    // Get template status\n    const templateStatus = await getTemplateStatus(templateId);\n    return res.status(200).json(templateStatus);\n  } catch (error) {\n    return res.status(500).json({ error: error.message });\n  }\n});\n\nconst PORT = process.env.PORT || 3000;\napp.listen(PORT, () => {\n  console.log(`Server running on port ${PORT}`);\n});\n```",
+        "testStrategy": "1. Unit tests for API endpoint handlers\n2. Test request validation with valid and invalid inputs\n3. Test rate limiting functionality\n4. Integration tests with mock template generation\n5. Load testing to ensure API can handle expected traffic\n6. Security testing for authentication and authorization\n7. Test error responses and status codes\n8. End-to-end API tests with actual template generation",
+        "priority": "medium",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement Comprehensive Testing and Documentation",
+        "description": "Create thorough testing suite and comprehensive documentation for the application.",
+        "details": "1. Implement testing suite:\n   - Unit tests for all modules\n   - Integration tests for module interactions\n   - End-to-end tests for full application flow\n   - Performance tests for response time validation\n\n2. Create comprehensive documentation:\n   - API documentation with examples\n   - Architecture overview\n   - Setup and installation guide\n   - Troubleshooting guide\n   - User guide with examples\n\n3. Set up continuous integration:\n   - Configure GitHub Actions or similar CI tool\n   - Automate test runs on pull requests\n   - Set up code coverage reporting\n\n4. Create example templates and demonstrations\n\nPseudo-code for test setup:\n```\n// Unit test example for conversation analysis\nconst { analyzeConversation } = require('../src/conversationAnalysis');\n\ndescribe('Conversation Analysis', () => {\n  test('should extract topics from conversation', async () => {\n    const sampleConversation = 'I want to create a YouTube content planner with a dreamy aesthetic';\n    const result = await analyzeConversation(sampleConversation);\n    \n    expect(result.topics).toContain('YouTube');\n    expect(result.topics).toContain('content planning');\n    expect(result.userPreferences.aestheticKeywords).toContain('dreamy');\n  });\n  \n  test('should identify planning elements', async () => {\n    const sampleConversation = 'I need a weekly schedule and a content board with status tags';\n    const result = await analyzeConversation(sampleConversation);\n    \n    expect(result.planningElements).toContainEqual({\n      type: 'schedule',\n      frequency: 'weekly'\n    });\n    expect(result.planningElements).toContainEqual({\n      type: 'board',\n      properties: ['status']\n    });\n  });\n});\n```\n\nDocumentation structure:\n1. README.md - Project overview and quick start\n2. INSTALLATION.md - Detailed setup instructions\n3. API.md - API documentation\n4. ARCHITECTURE.md - System design and component overview\n5. EXAMPLES.md - Example usage scenarios\n6. TROUBLESHOOTING.md - Common issues and solutions",
+        "testStrategy": "1. Verify test coverage across all modules (aim for >80%)\n2. Validate documentation completeness and accuracy\n3. Test CI/CD pipeline functionality\n4. Conduct user testing with documentation to ensure clarity\n5. Verify example templates work as expected\n6. Test troubleshooting guide against common failure scenarios\n7. Peer review of documentation and tests",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-06-20T22:14:59.842Z",
+      "updated": "2025-06-20T22:19:26.516Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
