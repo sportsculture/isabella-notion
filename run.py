@@ -14,6 +14,11 @@ sys.path.insert(0, str(src_path))
 def main():
     """Main startup function"""
     try:
+        # Change to the project root directory to find .env file
+        import os
+        project_root = Path(__file__).parent
+        os.chdir(project_root)
+        
         # Import and validate configuration
         from core.config import validate_environment
         validate_environment()

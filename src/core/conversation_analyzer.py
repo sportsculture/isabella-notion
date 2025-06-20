@@ -32,22 +32,25 @@ class ConversationAnalyzer:
             # Preprocess the conversation
             cleaned_text = self._preprocess_text(conversation_text)
             
-            # Build analysis prompt
-            prompt = self._build_analysis_prompt(cleaned_text)
+            # Run all extraction functions in parallel for better performance
+            tasks = [
+                self.extract_topics(cleaned_text),
+                self.identify_planning_elements(cleaned_text),
+                self.detect_user_preferences(cleaned_text),
+                self.extract_action_items(cleaned_text),
+                self.extract_structure(cleaned_text)
+            ]
             
-            # Call OpenAI API
-            response = await self.client.chat.completions.create(
-                model=self.settings.OPENAI_MODEL,
-                messages=[
-                    {"role": "system", "content": "You are an expert at analyzing conversations and extracting structured planning information for creating digital workspace templates."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=self.settings.OPENAI_MAX_TOKENS,
-                temperature=self.settings.OPENAI_TEMPERATURE
-            )
+            results = await asyncio.gather(*tasks)
             
-            # Parse the response
-            analysis_result = self._parse_analysis_response(response.choices[0].message.content)
+            # Combine results
+            analysis_result = {
+                "topics": results[0],
+                "planning_elements": results[1],
+                "user_preferences": results[2],
+                "action_items": results[3],
+                "structure": results[4]
+            }
             
             logger.info(f"Successfully analyzed conversation with {len(analysis_result.get('topics', []))} topics")
             
@@ -56,6 +59,186 @@ class ConversationAnalyzer:
         except Exception as e:
             logger.error(f"Error analyzing conversation: {str(e)}")
             raise
+    
+    async def extract_topics(self, conversation_text: str) -> List[str]:
+        """Extract main topics and categories from conversation"""
+        prompt = f"""
+        Analyze this conversation and extract the main topics being discussed.
+        Return only a JSON array of topic strings, maximum 10 topics.
+        
+        Conversation: {conversation_text}
+        
+        Return format: ["topic1", "topic2", "topic3"]
+        """
+        
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.settings.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are an expert at identifying conversation topics. Return only JSON arrays."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=500,
+                temperature=0.2
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            return result if isinstance(result, list) else []
+            
+        except Exception as e:
+            logger.warning(f"Error extracting topics: {str(e)}")
+            return ["General Planning"]
+    
+    async def identify_planning_elements(self, conversation_text: str) -> Dict[str, List[str]]:
+        """Extract schedules, checklists, trackers, and workflows"""
+        prompt = f"""
+        Analyze this conversation and extract planning elements.
+        Return only a JSON object with these exact keys:
+        
+        {{
+            "schedules": ["schedule items mentioned"],
+            "checklists": ["checklist items mentioned"],
+            "trackers": ["tracking items mentioned"],
+            "workflows": ["workflow descriptions mentioned"]
+        }}
+        
+        Conversation: {conversation_text}
+        """
+        
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.settings.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are an expert at identifying planning elements in conversations. Return only JSON objects."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=800,
+                temperature=0.2
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            return {
+                "schedules": result.get("schedules", []),
+                "checklists": result.get("checklists", []),
+                "trackers": result.get("trackers", []),
+                "workflows": result.get("workflows", [])
+            }
+            
+        except Exception as e:
+            logger.warning(f"Error identifying planning elements: {str(e)}")
+            return {"schedules": [], "checklists": [], "trackers": [], "workflows": []}
+    
+    async def detect_user_preferences(self, conversation_text: str) -> Dict[str, List[str]]:
+        """Parse style preferences, colors, organization style, and features"""
+        prompt = f"""
+        Analyze this conversation and extract user preferences.
+        Return only a JSON object with these exact keys:
+        
+        {{
+            "aesthetic_style": ["style words like 'dreamy', 'colorful', 'minimal', etc."],
+            "colors": ["specific colors mentioned"],
+            "organization_style": ["how they prefer to organize"],
+            "features_requested": ["specific features they want"]
+        }}
+        
+        Conversation: {conversation_text}
+        """
+        
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.settings.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are an expert at identifying user preferences and style choices. Return only JSON objects."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=600,
+                temperature=0.2
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            return {
+                "aesthetic_style": result.get("aesthetic_style", []),
+                "colors": result.get("colors", []),
+                "organization_style": result.get("organization_style", []),
+                "features_requested": result.get("features_requested", [])
+            }
+            
+        except Exception as e:
+            logger.warning(f"Error detecting user preferences: {str(e)}")
+            return {"aesthetic_style": [], "colors": [], "organization_style": [], "features_requested": []}
+    
+    async def extract_action_items(self, conversation_text: str) -> List[str]:
+        """Identify concrete tasks and action items"""
+        prompt = f"""
+        Analyze this conversation and extract concrete action items or tasks mentioned.
+        Return only a JSON array of action item strings.
+        
+        Conversation: {conversation_text}
+        
+        Return format: ["action1", "action2", "action3"]
+        """
+        
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.settings.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are an expert at identifying actionable tasks from conversations. Return only JSON arrays."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=500,
+                temperature=0.2
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            return result if isinstance(result, list) else []
+            
+        except Exception as e:
+            logger.warning(f"Error extracting action items: {str(e)}")
+            return []
+    
+    async def extract_structure(self, conversation_text: str) -> Dict[str, List[str]]:
+        """Extract organizational structure requirements"""
+        prompt = f"""
+        Analyze this conversation and determine what organizational structure they need.
+        Return only a JSON object with these exact keys:
+        
+        {{
+            "main_categories": ["main organizational categories needed"],
+            "database_types": ["types of databases like 'content_calendar', 'task_tracker', etc."],
+            "view_types": ["types of views like 'calendar', 'kanban', 'gallery', etc."],
+            "page_types": ["types of pages like 'dashboard', 'templates', 'archives', etc."]
+        }}
+        
+        Conversation: {conversation_text}
+        """
+        
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.settings.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are an expert at determining organizational structure needs. Return only JSON objects."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=700,
+                temperature=0.2
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            return {
+                "main_categories": result.get("main_categories", []),
+                "database_types": result.get("database_types", []),
+                "view_types": result.get("view_types", []),
+                "page_types": result.get("page_types", [])
+            }
+            
+        except Exception as e:
+            logger.warning(f"Error extracting structure: {str(e)}")
+            return {
+                "main_categories": ["Planning"],
+                "database_types": ["task_tracker"],
+                "view_types": ["table", "calendar"],
+                "page_types": ["dashboard"]
+            }
     
     def _preprocess_text(self, text: str) -> str:
         """Clean and normalize the conversation text"""
